@@ -14,5 +14,5 @@ public sealed interface SocioError {
     }
 
     record DatabaseBoom(String details) implements SocioError {
-    } // Para fallos técnicos encapsulados
+    }
 }

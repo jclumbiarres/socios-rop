@@ -1,0 +1,78 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.hibernate.orm' version '7.2.0.Final'
+    id 'org.graalvm.buildtools.native' version '0.11.3'
+}
+
+group = 'net.lumbi'
+version = '0.0.1-SNAPSHOT'
+description = 'Gestión de Socios'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    //implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    //	implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    // testImplementation 'org.springframework.boot:spring-boot-starter-amqp-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    //	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+hibernate {
+    enhancement {
+        enableAssociationManagement = true
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+// graalvmNative {
+//     binaries {
+//         main {
+//             buildArgs.add('--verbose')
+//             buildArgs.add('-H:+UnlockExperimentalVMOptions')
+            
+//             // Si el problema persiste, excluye Foreign Memory API
+//             buildArgs.add('--initialize-at-build-time=java.lang.invoke')
+//             buildArgs.add('-H:-UseContainerSupport') // Por si acaso
+//         }
+//     }
+// }
+graalvmNative {
+    binaries {
+        main {
+            buildArgs.add('-O2')
+            buildArgs.add('-march=native')
+            buildArgs.add('--enable-preview')
+            buildArgs.add('--enable-native-access=ALL-UNNAMED')
+        }
+    }
+}

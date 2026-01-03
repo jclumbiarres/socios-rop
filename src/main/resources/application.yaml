@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: socios
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydatabase
+    username: myuser
+    password: secret
+    database: mydatabase  # Aunque no es estándar en PostgreSQL, se mantiene como propiedad
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true

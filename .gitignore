@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+curlea.sh
+monitor.sh
+build/

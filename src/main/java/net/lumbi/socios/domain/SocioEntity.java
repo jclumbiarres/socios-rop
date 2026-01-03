@@ -33,7 +33,7 @@ public class SocioEntity {
     @Column(nullable = false, unique = true)
     private String nombre;
 
-    @NotNull
+    @NotBlank
     @Column(nullable = false, unique = true)
     private String dni;
 

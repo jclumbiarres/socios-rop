@@ -23,7 +23,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SocioEntity extends BaseEntity {
+public class SocioEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

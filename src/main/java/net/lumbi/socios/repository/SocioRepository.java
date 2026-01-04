@@ -21,4 +21,6 @@ public interface SocioRepository extends JpaRepository<SocioEntity, Long> {
     boolean existsByNumero(Integer numero);
 
     boolean existsByNombre(String nombre);
+
+    boolean existsByDniOrNombreOrNumero(String dni, String nombre, Integer numero);
 }

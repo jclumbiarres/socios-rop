@@ -1,5 +1,8 @@
 package net.lumbi.socios.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -62,44 +65,47 @@ public class SocioService {
 
         String msg = e.getMostSpecificCause().getMessage().toLowerCase();
 
-        String field = null;
-        if (msg.contains("dni") || msg.contains("uk_socio_dni"))
-            field = "dni";
-        else if (msg.contains("numero") || msg.contains("uk_socio_numero"))
-            field = "numero";
-        else if (msg.contains("nombre") || msg.contains("uk_socio_nombre"))
-            field = "nombre";
+        return detectConstraintViolation(msg)
+                .map(field -> mapToSocioError(field, dto))
+                .orElseThrow(() -> e);
+    }
 
+    private Optional<String> detectConstraintViolation(String errorMessage) {
+        Map<String, List<String>> fieldPatterns = Map.of(
+                "dni", List.of("dni", "uk_socio_dni"),
+                "numero", List.of("numero", "uk_socio_numero"),
+                "nombre", List.of("nombre", "uk_socio_nombre"));
+
+        return fieldPatterns.entrySet().stream()
+                .filter(entry -> entry.getValue().stream()
+                        .anyMatch(errorMessage::contains))
+                .map(Map.Entry::getKey)
+                .findFirst();
+    }
+
+    private Result<SocioEntity, SocioError> mapToSocioError(String field, SocioDTO dto) {
         return switch (field) {
             case "dni" -> Result.failure(new SocioError.DNIAlreadyExists(dto.dni()));
             case "numero" -> Result.failure(new SocioError.NumeroAlreadyExists(dto.numero()));
             case "nombre" -> Result.failure(new SocioError.NombreAlreadyExists(dto.nombre()));
-            case null -> Result.failure(new SocioError.EmptyField("NULL"));
-            default -> throw e;
+            default -> throw new IllegalStateException("Campo no reconocido: " + field);
         };
     }
 
     private Result<SocioDTO, SocioError> validateInexistence(SocioDTO dto) {
-        return checkDni(dto)
-                .flatMap(this::checkNumero)
-                .flatMap(this::checkNombre);
+        if (!socioRepository.existsByDniOrNombreOrNumero(dto.dni(), dto.nombre(), dto.numero())) {
+            return Result.success(dto);
+        }
+        return Result.<SocioDTO, SocioError>success(dto)
+                .flatMap(d -> socioRepository.existsByDni(d.dni())
+                        ? Result.<SocioDTO, SocioError>failure(new SocioError.DNIAlreadyExists(d.dni()))
+                        : Result.<SocioDTO, SocioError>success(d))
+                .flatMap(d -> socioRepository.existsByNumero(d.numero())
+                        ? Result.<SocioDTO, SocioError>failure(new SocioError.NumeroAlreadyExists(d.numero()))
+                        : Result.<SocioDTO, SocioError>success(d))
+                .flatMap(d -> socioRepository.existsByNombre(d.nombre())
+                        ? Result.<SocioDTO, SocioError>failure(new SocioError.NombreAlreadyExists(d.nombre()))
+                        : Result.<SocioDTO, SocioError>success(d));
     }
 
-    private Result<SocioDTO, SocioError> checkDni(SocioDTO dto) {
-        return socioRepository.existsByDni(dto.dni())
-                ? Result.failure(new SocioError.DNIAlreadyExists(dto.dni()))
-                : Result.success(dto);
-    }
-
-    private Result<SocioDTO, SocioError> checkNumero(SocioDTO dto) {
-        return socioRepository.existsByNumero(dto.numero())
-                ? Result.failure(new SocioError.NumeroAlreadyExists(dto.numero()))
-                : Result.success(dto);
-    }
-
-    private Result<SocioDTO, SocioError> checkNombre(SocioDTO dto) {
-        return socioRepository.existsByNombre(dto.nombre())
-                ? Result.failure(new SocioError.NombreAlreadyExists(dto.nombre()))
-                : Result.success(dto);
-    }
 }

@@ -54,18 +54,7 @@ hibernate {
 tasks.named('test') {
     useJUnitPlatform()
 }
-// graalvmNative {
-//     binaries {
-//         main {
-//             buildArgs.add('--verbose')
-//             buildArgs.add('-H:+UnlockExperimentalVMOptions')
-            
-//             // Si el problema persiste, excluye Foreign Memory API
-//             buildArgs.add('--initialize-at-build-time=java.lang.invoke')
-//             buildArgs.add('-H:-UseContainerSupport') // Por si acaso
-//         }
-//     }
-// }
+
 graalvmNative {
     binaries {
         main {

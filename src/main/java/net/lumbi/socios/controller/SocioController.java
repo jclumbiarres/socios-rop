@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 import net.lumbi.socios.domain.error.SocioError;
 import net.lumbi.socios.dto.ResponseDTO;
 import net.lumbi.socios.dto.SocioDTO;
-import net.lumbi.socios.kernel.Result;
 import net.lumbi.socios.service.SocioService;
 
 @RestController
@@ -24,6 +23,7 @@ public class SocioController {
         this.socioService = socioService;
     }
 
+    // DEBUG: se usa para comprobar que los virtual threads funcionan
     @GetMapping("/thread")
     public String getThreadType() {
         return Thread.currentThread().toString();
@@ -31,37 +31,38 @@ public class SocioController {
 
     @PostMapping("/add")
     public ResponseEntity<ResponseDTO> createSocio(@Valid @RequestBody SocioDTO socio) {
-        Result<SocioDTO, SocioError> result = socioService.createSocio(socio);
-
-        // Usamos el fold para desempaquetar el Result (Railway)
-        return result.fold(
-                // On Success: 201 Created
+        return socioService.createSocio(socio).fold(
                 savedDto -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(new ResponseDTO(
                                 HttpStatus.CREATED.value(),
                                 "Socio creado exitosamente: " + savedDto.dni())),
+                this::errorResponse);
+    }
 
-                // On Failure: Pattern Matching sobre el ADT SocioError
-                error -> {
-                    HttpStatus status = switch (error) {
-                        case SocioError.DNIAlreadyExists e -> HttpStatus.CONFLICT;
-                        case SocioError.NumeroAlreadyExists e -> HttpStatus.CONFLICT;
-                        case SocioError.NombreAlreadyExists e -> HttpStatus.CONFLICT;
-                        case SocioError.EmptyField e -> HttpStatus.BAD_REQUEST;
-                        case SocioError.DatabaseBoom e -> HttpStatus.INTERNAL_SERVER_ERROR;
-                    };
+    private ResponseEntity<ResponseDTO> errorResponse(SocioError error) {
+        HttpStatus status = errorType(error);
+        return ResponseEntity.status(status)
+                .body(new ResponseDTO(status.value(), errorMsg(error)));
+    }
 
-                    String message = switch (error) {
-                        case SocioError.DNIAlreadyExists e -> "Ya existe un socio con DNI: " + e.dni();
-                        case SocioError.EmptyField e ->
-                            "No se puede crear el socio porque hay campos vacíos " + e.field();
-                        case SocioError.NumeroAlreadyExists e -> "Ya existe un socio con número: " + e.numero();
-                        case SocioError.NombreAlreadyExists e -> "Ya existe un socio con nombre: " + e.nombre();
-                        case SocioError.DatabaseBoom e -> "Error crítico de base de datos";
-                    };
+    private HttpStatus errorType(SocioError err) {
+        return switch (err) {
+            case SocioError.DNIAlreadyExists e -> HttpStatus.CONFLICT;
+            case SocioError.NumeroAlreadyExists e -> HttpStatus.CONFLICT;
+            case SocioError.NombreAlreadyExists e -> HttpStatus.CONFLICT;
+            case SocioError.EmptyField e -> HttpStatus.BAD_REQUEST;
+            case SocioError.DatabaseBoom e -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+    }
 
-                    return ResponseEntity.status(status)
-                            .body(new ResponseDTO(status.value(), message));
-                });
+    private String errorMsg(SocioError err) {
+        return switch (err) {
+            case SocioError.DNIAlreadyExists e -> "Ya existe un socio con DNI: " + e.dni();
+            case SocioError.EmptyField e ->
+                "No se puede crear el socio porque hay campos vacíos " + e.field();
+            case SocioError.NumeroAlreadyExists e -> "Ya existe un socio con número: " + e.numero();
+            case SocioError.NombreAlreadyExists e -> "Ya existe un socio con nombre: " + e.nombre();
+            case SocioError.DatabaseBoom e -> "Error crítico de base de datos";
+        };
     }
 }

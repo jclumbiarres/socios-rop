@@ -93,19 +93,21 @@ public class SocioService {
     }
 
     private Result<SocioDTO, SocioError> validateInexistence(SocioDTO dto) {
-        if (!socioRepository.existsByDniOrNombreOrNumero(dto.dni(), dto.nombre(), dto.numero())) {
+        String conflictingField = socioRepository.findFirstConflictingField(
+                dto.dni(),
+                dto.numero(),
+                dto.nombre());
+
+        if (conflictingField == null) {
             return Result.success(dto);
         }
-        return Result.<SocioDTO, SocioError>success(dto)
-                .flatMap(d -> socioRepository.existsByDni(d.dni())
-                        ? Result.<SocioDTO, SocioError>failure(new SocioError.DNIAlreadyExists(d.dni()))
-                        : Result.<SocioDTO, SocioError>success(d))
-                .flatMap(d -> socioRepository.existsByNumero(d.numero())
-                        ? Result.<SocioDTO, SocioError>failure(new SocioError.NumeroAlreadyExists(d.numero()))
-                        : Result.<SocioDTO, SocioError>success(d))
-                .flatMap(d -> socioRepository.existsByNombre(d.nombre())
-                        ? Result.<SocioDTO, SocioError>failure(new SocioError.NombreAlreadyExists(d.nombre()))
-                        : Result.<SocioDTO, SocioError>success(d));
+
+        return Result.failure(switch (conflictingField) {
+            case "dni" -> new SocioError.DNIAlreadyExists(dto.dni());
+            case "numero" -> new SocioError.NumeroAlreadyExists(dto.numero());
+            case "nombre" -> new SocioError.NombreAlreadyExists(dto.nombre());
+            default -> throw new IllegalStateException("Campo no reconocido: " + conflictingField);
+        });
     }
 
 }

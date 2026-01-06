@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import net.lumbi.socios.domain.SocioEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 @Repository
 public interface SocioRepository extends JpaRepository<SocioEntity, Long> {
@@ -23,4 +24,14 @@ public interface SocioRepository extends JpaRepository<SocioEntity, Long> {
     boolean existsByNombre(String nombre);
 
     boolean existsByDniOrNombreOrNumero(String dni, String nombre, Integer numero);
+
+    @Query(value = """
+            SELECT CASE
+                WHEN EXISTS (SELECT 1 FROM socio WHERE dni = :dni) THEN 'dni'
+                WHEN EXISTS (SELECT 1 FROM socio WHERE numero = :numero) THEN 'numero'
+                WHEN EXISTS (SELECT 1 FROM socio WHERE nombre = :nombre) THEN 'nombre'
+                ELSE NULL
+            END
+            """, nativeQuery = true)
+    String findFirstConflictingField(String dni, Integer numero, String nombre);
 }

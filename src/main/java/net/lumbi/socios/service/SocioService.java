@@ -101,13 +101,8 @@ public class SocioService {
         if (conflictingField == null) {
             return Result.success(dto);
         }
-
-        return Result.failure(switch (conflictingField) {
-            case "dni" -> new SocioError.DNIAlreadyExists(dto.dni());
-            case "numero" -> new SocioError.NumeroAlreadyExists(dto.numero());
-            case "nombre" -> new SocioError.NombreAlreadyExists(dto.nombre());
-            default -> throw new IllegalStateException("Campo no reconocido: " + conflictingField);
-        });
+        return mapToSocioError(conflictingField, dto)
+                .map(entity -> dto);
     }
 
 }

@@ -42,7 +42,7 @@ public class SocioEntity {
     private LocalDate fechaNacimiento;
 
     @NotNull
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
     private Integer numero;
 
 }

@@ -2,12 +2,14 @@ package net.lumbi.socios.repository;
 
 import org.springframework.stereotype.Repository;
 
+import jakarta.persistence.Table;
 import net.lumbi.socios.domain.SocioEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 @Repository
+@Table(name = "socios")
 public interface SocioRepository extends JpaRepository<SocioEntity, Long> {
     SocioEntity findByDniAndIdNot(String dni, Long idSocio);
 
@@ -27,9 +29,9 @@ public interface SocioRepository extends JpaRepository<SocioEntity, Long> {
 
     @Query(value = """
             SELECT CASE
-                WHEN EXISTS (SELECT 1 FROM socio WHERE dni = :dni) THEN 'dni'
-                WHEN EXISTS (SELECT 1 FROM socio WHERE numero = :numero) THEN 'numero'
-                WHEN EXISTS (SELECT 1 FROM socio WHERE nombre = :nombre) THEN 'nombre'
+                WHEN EXISTS (SELECT 1 FROM socios WHERE dni = :dni) THEN 'dni'
+                WHEN EXISTS (SELECT 1 FROM socios WHERE numero = :numero) THEN 'numero'
+                WHEN EXISTS (SELECT 1 FROM socios WHERE nombre = :nombre) THEN 'nombre'
                 ELSE NULL
             END
             """, nativeQuery = true)

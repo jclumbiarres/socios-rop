@@ -2,14 +2,12 @@ package net.lumbi.socios.repository;
 
 import org.springframework.stereotype.Repository;
 
-import jakarta.persistence.Table;
 import net.lumbi.socios.domain.SocioEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 @Repository
-@Table(name = "socios")
 public interface SocioRepository extends JpaRepository<SocioEntity, Long> {
     SocioEntity findByDniAndIdNot(String dni, Long idSocio);
 

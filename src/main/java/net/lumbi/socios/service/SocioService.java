@@ -3,14 +3,12 @@ package net.lumbi.socios.service;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
+
 import net.lumbi.socios.domain.SocioEntity;
 import net.lumbi.socios.domain.error.SocioError;
 import net.lumbi.socios.dto.SocioDTO;
@@ -37,19 +35,6 @@ public class SocioService {
     private Result<SocioEntity, SocioError> persist(SocioDTO dto) {
         try {
             SocioEntity entity = SocioMapper.toEntity(dto);
-
-            // Validación Bean Validation antes de persistir
-            Set<ConstraintViolation<SocioEntity>> violations = Validation
-                    .buildDefaultValidatorFactory()
-                    .getValidator()
-                    .validate(entity);
-
-            if (!violations.isEmpty()) {
-                // Tomamos el primer campo que falla para simplificar
-                ConstraintViolation<SocioEntity> violation = violations.iterator().next();
-                String fieldName = violation.getPropertyPath().toString();
-                return Result.failure(new SocioError.EmptyField(fieldName));
-            }
 
             SocioEntity saved = socioRepository.save(entity);
             return Result.success(saved);
